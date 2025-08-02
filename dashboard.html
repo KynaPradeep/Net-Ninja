@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Network Monitoring Dashboard</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f5f7fa;
+      margin: 0;
+      padding: 2rem;
+    }
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+    }
+    .container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+      margin-top: 2rem;
+    }
+    .card {
+      background-color: #fff;
+      border-radius: 16px;
+      padding: 1.5rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    .card h2 {
+      margin-top: 0;
+      color: #34495e;
+    }
+    .info-line {
+      margin: 0.5rem 0;
+    }
+    .progress-bar-container {
+      background-color: #ecf0f1;
+      border-radius: 12px;
+      overflow: hidden;
+      height: 20px;
+    }
+    .progress-bar {
+      height: 100%;
+      background-color: #3498db;
+      text-align: center;
+      color: white;
+      line-height: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Network Monitoring Dashboard</h1>
+  <div class="container">
+    <div class="card" id="system-info">
+      <h2>🖥 System Overview</h2>
+      <p class="info-line" id="hostname"></p>
+      <p class="info-line" id="local-ip"></p>
+    </div>
+
+    <div class="card" id="network-stats">
+      <h2>🌐 Network Stats</h2>
+      <p class="info-line" id="interfaces"></p>
+      <p class="info-line" id="bytes-sent"></p>
+      <p class="info-line" id="bytes-recv"></p>
+    </div>
+
+    <div class="card" id="cpu">
+      <h2>🧠 CPU Usage</h2>
+      <div class="progress-bar-container">
+        <div class="progress-bar" id="cpu-bar">0%</div>
+      </div>
+    </div>
+
+    <div class="card" id="memory">
+      <h2>🧮 Memory Usage</h2>
+      <div class="progress-bar-container">
+        <div class="progress-bar" id="memory-bar">0%</div>
+      </div>
+    </div>
+
+    <div class="card" id="disk">
+      <h2>💾 Disk Usage</h2>
+      <div class="progress-bar-container">
+        <div class="progress-bar" id="disk-bar">0%</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    async function fetchData() {
+      try {
+        const netRes = await fetch('/network');
+        const netData = await netRes.json();
+        document.getElementById('hostname').textContent = `Hostname: ${netData.hostname}`;
+        document.getElementById('local-ip').textContent = `Local IP: ${netData.local_ip}`;
+        document.getElementById('interfaces').textContent = `Interfaces: ${netData.interfaces.join(', ')}`;
+        document.getElementById('bytes-sent').textContent = `Data Sent: ${(netData.bytes_sent / 1024 / 1024).toFixed(2)} MB`;
+        document.getElementById('bytes-recv').textContent = `Data Received: ${(netData.bytes_recv / 1024 / 1024).toFixed(2)} MB`;
+
+        const statsRes = await fetch('/stats');
+        const stats = await statsRes.json();
+
+        document.getElementById('cpu-bar').style.width = `${stats.cpu_percent}%`;
+        document.getElementById('cpu-bar').textContent = `${stats.cpu_percent}%`;
+
+        const memUsed = ((stats.memory.used / stats.memory.total) * 100).toFixed(1);
+        document.getElementById('memory-bar').style.width = `${memUsed}%`;
+        document.getElementById('memory-bar').textContent = `${memUsed}%`;
+
+        const diskUsed = ((stats.disk.used / stats.disk.total) * 100).toFixed(1);
+        document.getElementById('disk-bar').style.width = `${diskUsed}%`;
+        document.getElementById('disk-bar').textContent = `${diskUsed}%`;
+      } catch (error) {
+        console.error('Error loading data:', error);
+      }
+    }
+
+    fetchData();
+    setInterval(fetchData, 5000);
+  </script>
+</body>
+</html>
